@@ -18,7 +18,7 @@
       <div class="gate-mark" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M16 22V9M16 9l-6 6M16 9l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 22v3a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
       <p class="gate-eyebrow">WEEKLY DATA BATCH</p>
       <h1 id="upload-title">Upload source workbooks</h1>
-      <p class="gate-intro">Upload the four source exports as one complete batch. They are pushed to the private source repository, which automatically rebuilds, validates and republishes the dashboard a short time later.</p>
+      <p class="gate-intro">Upload the four source exports as one complete batch. They are held in private transfer storage while an automated workflow rebuilds, validates and republishes the dashboard.</p>
       <form id="upload-form" class="gate-form" autocomplete="off">
         <div class="upload-slots">
           <label class="upload-slot">
@@ -50,7 +50,7 @@
         <button class="gate-submit" id="upload-button" type="submit"><span id="upload-label">Upload batch</span><span class="gate-spinner" id="upload-spinner" hidden aria-hidden="true"></span></button>
         <p class="gate-message" id="upload-message" role="status" aria-live="polite"></p>
       </form>
-      <p class="gate-session-note">The file selected in each numbered slot is pushed to that slot's fixed path regardless of its local file name — just pick the right slot for each workbook. The dashboard refreshes itself within a few minutes once the rebuild finishes; no need to keep this page open. <a href="index.html">Open the dashboard</a> instead.</p>
+      <p class="gate-session-note">Keep each workbook's original file name and select the matching slot. Maximum 20 MiB per file and 40 MiB for the complete request. The dashboard refreshes once the rebuild finishes; you can close this page after the batch is received. <a href="index.html">Open the dashboard</a>.</p>
     </section>
     <p class="gate-footer">Private workspace · Upload portal</p>
   </main>

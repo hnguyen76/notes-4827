@@ -2,8 +2,16 @@
 (() => {
   // Fill in your deployed Cloudflare Worker URL after `wrangler deploy`
   // (see cloudflare/README.md). Example: https://data-upload.<subdomain>.workers.dev/upload
-  const ENDPOINT = 'https://data-upload.YOUR-SUBDOMAIN.workers.dev/upload';
-  const MAX_BYTES = 60 * 1024 * 1024;
+  const ENDPOINT = 'https://data-upload.hieumercer.workers.dev/upload';
+  const MAX_BYTES = 20 * 1024 * 1024;
+  const MAX_BATCH_BYTES = 40 * 1024 * 1024;
+  const MULTIPART_ALLOWANCE = 64 * 1024;
+  const EXPECTED_FILES = {
+    scorecardCC: 'Scorecards_CC.xlsx',
+    powerbiCC: 'PowerBI_CC.xlsx',
+    scorecardGWPMG: 'Don_-_Scorecards_GWPMG.xls (1).xlsx',
+    powerbiGWPMG: 'Don_-_PowerBI_GW.xls (1).xlsx',
+  };
 
   const $ = (id) => document.getElementById(id);
   const form = $('upload-form');
@@ -49,21 +57,25 @@
     const missing = files.find((entry) => !entry.file);
     if (missing) { message.dataset.kind = 'error'; message.textContent = 'Select all four files before uploading.'; return; }
     const tooLarge = files.find((entry) => entry.file.size === 0 || entry.file.size > MAX_BYTES);
-    if (tooLarge) { message.dataset.kind = 'error'; message.textContent = `${tooLarge.file.name} is empty or too large.`; return; }
+    if (tooLarge) { message.dataset.kind = 'error'; message.textContent = `${tooLarge.file.name} is empty or exceeds the 20 MiB file limit.`; return; }
+    const wrongSlot = files.find((entry) => entry.file.name !== EXPECTED_FILES[entry.field]);
+    if (wrongSlot) { message.dataset.kind = 'error'; message.textContent = `Wrong workbook in this slot. Select ${EXPECTED_FILES[wrongSlot.field]}.`; return; }
+    if (files.reduce((sum, entry) => sum + entry.file.size, 0) + MULTIPART_ALLOWANCE > MAX_BATCH_BYTES) {
+      message.dataset.kind = 'error'; message.textContent = 'The complete batch must fit within the 40 MiB upload limit.'; return;
+    }
     const password = passwordInput.value;
     if (!password) { message.dataset.kind = 'error'; message.textContent = 'Enter the upload password.'; passwordInput.focus(); return; }
 
     const data = new FormData();
-    data.append('token', password);
     for (const { field, file } of files) data.append(field, file, file.name);
 
     setBusy(true, 'Uploading');
     message.dataset.kind = 'loading';
-    message.textContent = 'Uploading the batch to the private repository…';
+    message.textContent = 'Uploading the batch to private transfer storage…';
     passwordInput.value = '';
 
     try {
-      const response = await fetch(ENDPOINT, { method: 'POST', body: data, credentials: 'omit' });
+      const response = await fetch(ENDPOINT, { method: 'POST', headers: { Authorization: `Bearer ${password}` }, body: data, credentials: 'omit' });
       let payload = null;
       try { payload = await response.json(); } catch { /* non-JSON error response */ }
       if (!response.ok) {
