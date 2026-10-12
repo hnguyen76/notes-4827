@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <meta name="referrer" content="no-referrer">
+  <meta name="description" content="A password is required to open this shared workspace.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' blob:; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' blob: data:; font-src 'self'; base-uri 'none'; object-src 'none'; frame-src 'none'; form-action 'none'">
+  <meta name="theme-color" content="#172d4b">
+  <title>Shared workspace</title>
+  <link rel="stylesheet" href="gate.css">
+  <script src="unlock.js" defer></script>
+</head>
+<body>
+  <main class="gate-main" id="access-gate">
+    <section class="gate-card" aria-labelledby="gate-title">
+      <div class="gate-mark" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><rect x="7" y="14" width="18" height="14" rx="3" stroke="currentColor" stroke-width="2"/><path d="M11 14V9a5 5 0 0 1 10 0v5" stroke="currentColor" stroke-width="2"/><circle cx="16" cy="21" r="2" fill="currentColor"/></svg></div>
+      <p class="gate-eyebrow">PRIVATE ACCESS</p>
+      <h1 id="gate-title">Shared workspace</h1>
+      <p class="gate-intro">Enter the password shared with you to open this workspace.</p>
+      <form id="unlock-form" class="gate-form" autocomplete="off">
+        <label for="access-password">Workspace password</label>
+        <div class="gate-password-row">
+          <input id="access-password" type="password" autocomplete="off" spellcheck="false" autocapitalize="none" required aria-describedby="gate-message gate-session-note">
+          <button class="gate-show" id="show-password" type="button" aria-label="Show password" aria-pressed="false">Show</button>
+        </div>
+        <button class="gate-submit" id="unlock-button" type="submit"><span id="unlock-label">Unlock workspace</span><span class="gate-spinner" id="unlock-spinner" hidden aria-hidden="true"></span></button>
+        <p class="gate-message" id="gate-message" role="status" aria-live="polite"></p>
+      </form>
+      <p class="gate-session-note" id="gate-session-note">Access stays open in this tab. Reload or select Lock to require the password again.</p>
+      <noscript><p class="gate-message">JavaScript must be enabled to unlock this workspace.</p></noscript>
+    </section>
+    <p class="gate-footer">Password protected workspace</p>
+  </main>
+</body>
+</html>
