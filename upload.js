@@ -1,0 +1,83 @@
+'use strict';
+(() => {
+  // Fill in your deployed Cloudflare Worker URL after `wrangler deploy`
+  // (see cloudflare/README.md). Example: https://data-upload.<subdomain>.workers.dev/upload
+  const ENDPOINT = 'https://data-upload.YOUR-SUBDOMAIN.workers.dev/upload';
+  const MAX_BYTES = 60 * 1024 * 1024;
+
+  const $ = (id) => document.getElementById(id);
+  const form = $('upload-form');
+  const message = $('upload-message');
+  const passwordInput = $('upload-password');
+  const button = $('upload-button');
+  const label = $('upload-label');
+  const spinner = $('upload-spinner');
+
+  form.querySelectorAll('input[type=file]').forEach((input) => {
+    input.addEventListener('change', () => {
+      const small = input.closest('.upload-slot').querySelector('.upload-filename');
+      const file = input.files?.[0];
+      small.textContent = file ? `${file.name} · ${(file.size / 1024).toFixed(0)} KB` : small.dataset.empty;
+      small.classList.toggle('has-file', Boolean(file));
+    });
+  });
+
+  $('upload-show-password').addEventListener('click', () => {
+    const visible = passwordInput.type === 'password';
+    passwordInput.type = visible ? 'text' : 'password';
+    $('upload-show-password').textContent = visible ? 'Hide' : 'Show';
+    $('upload-show-password').setAttribute('aria-pressed', String(visible));
+  });
+
+  function setBusy(busy, text) {
+    button.disabled = busy;
+    spinner.hidden = !busy;
+    label.textContent = text;
+    form.setAttribute('aria-busy', String(busy));
+  }
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (button.disabled) return;
+    if (ENDPOINT.includes('YOUR-SUBDOMAIN')) {
+      message.dataset.kind = 'error';
+      message.textContent = 'Upload endpoint is not configured yet. Deploy the Cloudflare Worker and set ENDPOINT in upload.js.';
+      return;
+    }
+    const inputs = [...form.querySelectorAll('input[type=file]')];
+    const files = inputs.map((input) => ({ field: input.name, file: input.files?.[0] }));
+    const missing = files.find((entry) => !entry.file);
+    if (missing) { message.dataset.kind = 'error'; message.textContent = 'Select all four files before uploading.'; return; }
+    const tooLarge = files.find((entry) => entry.file.size === 0 || entry.file.size > MAX_BYTES);
+    if (tooLarge) { message.dataset.kind = 'error'; message.textContent = `${tooLarge.file.name} is empty or too large.`; return; }
+    const password = passwordInput.value;
+    if (!password) { message.dataset.kind = 'error'; message.textContent = 'Enter the upload password.'; passwordInput.focus(); return; }
+
+    const data = new FormData();
+    data.append('token', password);
+    for (const { field, file } of files) data.append(field, file, file.name);
+
+    setBusy(true, 'Uploading');
+    message.dataset.kind = 'loading';
+    message.textContent = 'Uploading the batch to the private repository…';
+    passwordInput.value = '';
+
+    try {
+      const response = await fetch(ENDPOINT, { method: 'POST', body: data, credentials: 'omit' });
+      let payload = null;
+      try { payload = await response.json(); } catch { /* non-JSON error response */ }
+      if (!response.ok) {
+        throw new Error(payload?.error || `Upload failed (${response.status}).`);
+      }
+      message.dataset.kind = 'success';
+      message.textContent = `Batch received (reference ${(payload?.batchId || '').slice(0, 19) || 'recorded'}). The dashboard rebuild, validation and publish run automatically — allow a few minutes, then reopen the dashboard.`;
+      form.reset();
+      form.querySelectorAll('.upload-filename').forEach((el) => { el.textContent = el.dataset.empty; el.classList.remove('has-file'); });
+    } catch (error) {
+      message.dataset.kind = 'error';
+      message.textContent = error.message || 'Upload failed. Check the password and try again.';
+    } finally {
+      setBusy(false, 'Upload batch');
+    }
+  });
+})();

@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <meta name="referrer" content="no-referrer">
+  <meta name="description" content="Upload a new weekly source data batch.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.workers.dev; img-src 'self'; font-src 'self'; base-uri 'none'; object-src 'none'; frame-src 'none'; form-action 'none'">
+  <meta name="theme-color" content="#172d4b">
+  <title>Data upload</title>
+  <link rel="stylesheet" href="gate.css">
+  <script src="upload.js" defer></script>
+</head>
+<body>
+  <main class="gate-main" id="upload-gate">
+    <section class="gate-card upload-card" aria-labelledby="upload-title">
+      <div class="gate-mark" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M16 22V9M16 9l-6 6M16 9l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 22v3a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
+      <p class="gate-eyebrow">WEEKLY DATA BATCH</p>
+      <h1 id="upload-title">Upload source workbooks</h1>
+      <p class="gate-intro">Upload the four source exports as one complete batch. They are pushed to the private source repository, which automatically rebuilds, validates and republishes the dashboard a short time later.</p>
+      <form id="upload-form" class="gate-form" autocomplete="off">
+        <div class="upload-slots">
+          <label class="upload-slot">
+            <span>Slot 1 — Scorecards_CC.xlsx</span>
+            <input type="file" name="scorecardCC" accept=".xlsx" required>
+            <small class="upload-filename" data-empty="No file selected">No file selected</small>
+          </label>
+          <label class="upload-slot">
+            <span>Slot 2 — PowerBI_CC.xlsx</span>
+            <input type="file" name="powerbiCC" accept=".xlsx" required>
+            <small class="upload-filename" data-empty="No file selected">No file selected</small>
+          </label>
+          <label class="upload-slot">
+            <span>Slot 3 — Don_-_Scorecards_GWPMG.xls (1).xlsx</span>
+            <input type="file" name="scorecardGWPMG" accept=".xlsx" required>
+            <small class="upload-filename" data-empty="No file selected">No file selected</small>
+          </label>
+          <label class="upload-slot">
+            <span>Slot 4 — Don_-_PowerBI_GW.xls (1).xlsx</span>
+            <input type="file" name="powerbiGWPMG" accept=".xlsx" required>
+            <small class="upload-filename" data-empty="No file selected">No file selected</small>
+          </label>
+        </div>
+        <label for="upload-password">Upload password</label>
+        <div class="gate-password-row">
+          <input id="upload-password" type="password" autocomplete="off" spellcheck="false" autocapitalize="none" required aria-describedby="upload-message">
+          <button class="gate-show" id="upload-show-password" type="button" aria-label="Show password" aria-pressed="false">Show</button>
+        </div>
+        <button class="gate-submit" id="upload-button" type="submit"><span id="upload-label">Upload batch</span><span class="gate-spinner" id="upload-spinner" hidden aria-hidden="true"></span></button>
+        <p class="gate-message" id="upload-message" role="status" aria-live="polite"></p>
+      </form>
+      <p class="gate-session-note">The file selected in each numbered slot is pushed to that slot's fixed path regardless of its local file name — just pick the right slot for each workbook. The dashboard refreshes itself within a few minutes once the rebuild finishes; no need to keep this page open. <a href="index.html">Open the dashboard</a> instead.</p>
+    </section>
+    <p class="gate-footer">Private workspace · Upload portal</p>
+  </main>
+</body>
+</html>
