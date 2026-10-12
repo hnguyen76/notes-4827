@@ -10,4 +10,5 @@
 .upload-filename{display:block;margin-top:6px;font-size:10.5px;color:#8995a5}
 .upload-filename.has-file{color:#22806c;font-weight:600}
 .gate-message[data-kind=success]{color:#22806c}
+.gate-footer a{color:#5b7aa0;font-weight:600}
 #upload-password{font:14px Segoe UI,Arial,sans-serif}
