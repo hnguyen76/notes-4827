@@ -31,7 +31,7 @@
     const isObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
     if (!isObject(candidate) || candidate.schemaVersion !== 1 || candidate.version !== metadata.version) throw new Error('Invalid workspace.');
     for (const name of ['dashboardHTML','appJS','stylesCSS','reportHTML']) if (typeof candidate[name] !== 'string' || !candidate[name].length) throw new Error('Invalid workspace.');
-    for (const name of ['model','report','audit','privateManifest','refreshStatus']) if (!isObject(candidate[name])) throw new Error('Invalid workspace.');
+    for (const name of ['model','report','audit','privateManifest','refreshStatus','backlogHistory']) if (!isObject(candidate[name])) throw new Error('Invalid workspace.');
     const model = candidate.model, manifest = candidate.privateManifest, report = candidate.report, audit = candidate.audit.metadata, status = candidate.refreshStatus;
     const modelMeta = model.metadata;
     if (!isObject(modelMeta) || !isObject(audit) || !Array.isArray(model.jobs) || !Array.isArray(model.companies) || !model.companies.length) throw new Error('Invalid workspace model.');
@@ -42,6 +42,9 @@
     const processedAt = Date.parse(modelMeta.processedAtUtc);
     if (!Number.isFinite(processedAt) || [manifest.generatedAt, report.generatedAt, audit.processedAtUtc, status.processedAtUtc].some((value) => Date.parse(value) !== processedAt)) throw new Error('Mixed processing timestamps.');
     if (!/^data\/[A-Za-z0-9_-]+\.json$/.test(manifest.datasetPath) || manifest.compressedDatasetPath !== manifest.datasetPath + '.gz') throw new Error('Invalid workspace paths.');
+    const history = candidate.backlogHistory.history;
+    const latestHistoryEntry = Array.isArray(history) && history.length ? history[history.length - 1] : null;
+    if (!latestHistoryEntry || latestHistoryEntry.asOf !== modelMeta.asOf || latestHistoryEntry.sourceBatchId !== manifest.sourceBatchId) throw new Error('Backlog history does not match the current snapshot.');
     return candidate;
   }
 
@@ -64,6 +67,7 @@
       case 'data/manifest.json': return bundle.privateManifest;
       case 'data/audit.json': return bundle.audit;
       case 'data/refresh-status.json': return bundle.refreshStatus;
+      case 'data/backlog_history.json': return bundle.backlogHistory;
       default: throw new Error('Unknown private asset.');
     }
   }
