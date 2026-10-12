@@ -18,7 +18,7 @@
       <div class="gate-mark" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M16 22V9M16 9l-6 6M16 9l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 22v3a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
       <p class="gate-eyebrow">WEEKLY DATA BATCH</p>
       <h1 id="upload-title">Upload source workbooks</h1>
-      <p class="gate-intro">Upload the four source exports as one complete batch. They are held in private transfer storage while an automated workflow rebuilds, validates and republishes the dashboard.</p>
+      <p class="gate-intro">Upload the four core exports to update the complete dashboard. You can also include the complete four-file supplemental group below for the latest detailed job and accounting updates.</p>
       <form id="upload-form" class="gate-form" autocomplete="off">
         <div class="upload-slots">
           <label class="upload-slot">
@@ -42,6 +42,16 @@
             <small class="upload-filename" data-empty="No file selected">No file selected</small>
           </label>
         </div>
+        <details>
+          <summary>Supplemental detailed exports (optional complete group)</summary>
+          <p>These exports cover only their supplied jobs. Upload all four together; the remaining companies and job history stay in the core dataset.</p>
+          <div class="upload-slots">
+            <label class="upload-slot"><span>Accounting — Don_PowerBI_Accounting.xls.xlsx</span><input type="file" name="accounting" accept=".xlsx" data-supplemental><small class="upload-filename" data-empty="No file selected">No file selected</small></label>
+            <label class="upload-slot"><span>Job fields — Don_PowerBI_JobFields.xls.xlsx</span><input type="file" name="jobFields" accept=".xlsx" data-supplemental><small class="upload-filename" data-empty="No file selected">No file selected</small></label>
+            <label class="upload-slot"><span>Participants — Don_PowerBI_Participants.xls.xlsx</span><input type="file" name="participants" accept=".xlsx" data-supplemental><small class="upload-filename" data-empty="No file selected">No file selected</small></label>
+            <label class="upload-slot"><span>Dates — Don_PowerBI_Dates.xls (1).xlsx</span><input type="file" name="dates" accept=".xlsx" data-supplemental><small class="upload-filename" data-empty="No file selected">No file selected</small></label>
+          </div>
+        </details>
         <label for="upload-password">Upload password</label>
         <div class="gate-password-row">
           <input id="upload-password" type="password" autocomplete="off" spellcheck="false" autocapitalize="none" required aria-describedby="upload-message">

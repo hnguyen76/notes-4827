@@ -11,6 +11,10 @@
     powerbiCC: 'PowerBI_CC.xlsx',
     scorecardGWPMG: 'Don_-_Scorecards_GWPMG.xls (1).xlsx',
     powerbiGWPMG: 'Don_-_PowerBI_GW.xls (1).xlsx',
+    accounting: 'Don_PowerBI_Accounting.xls.xlsx',
+    jobFields: 'Don_PowerBI_JobFields.xls.xlsx',
+    participants: 'Don_PowerBI_Participants.xls.xlsx',
+    dates: 'Don_PowerBI_Dates.xls (1).xlsx',
   };
 
   const $ = (id) => document.getElementById(id);
@@ -53,9 +57,12 @@
       return;
     }
     const inputs = [...form.querySelectorAll('input[type=file]')];
-    const files = inputs.map((input) => ({ field: input.name, file: input.files?.[0] }));
-    const missing = files.find((entry) => !entry.file);
+    const selection = inputs.map((input) => ({ field: input.name, file: input.files?.[0], supplemental: input.hasAttribute('data-supplemental') }));
+    const missing = selection.find((entry) => !entry.supplemental && !entry.file);
     if (missing) { message.dataset.kind = 'error'; message.textContent = 'Select all four files before uploading.'; return; }
+    const supplemental = selection.filter((entry) => entry.supplemental && entry.file);
+    if (supplemental.length && supplemental.length !== 4) { message.dataset.kind = 'error'; message.textContent = 'Select all four supplemental exports, or leave the complete supplemental group empty.'; return; }
+    const files = selection.filter((entry) => entry.file);
     const tooLarge = files.find((entry) => entry.file.size === 0 || entry.file.size > MAX_BYTES);
     if (tooLarge) { message.dataset.kind = 'error'; message.textContent = `${tooLarge.file.name} is empty or exceeds the 20 MiB file limit.`; return; }
     const wrongSlot = files.find((entry) => entry.file.name !== EXPECTED_FILES[entry.field]);

@@ -8,7 +8,7 @@
   const dashboardURL = new URL(location.pathname, location.origin).href;
   const objectURLs = new Map();
   const encoder = new TextEncoder();
-  let bundle = null, key = null, release = null, refreshPromise = null;
+  let bundle = null, key = null, release = null, refreshPromise = null, pendingReloadVersion = null;
 
   function decodeBase64(value, min, max) {
     if (typeof value !== 'string' || !/^[A-Za-z0-9+/]+={0,2}$/.test(value)) throw new Error('Invalid release.');
@@ -35,6 +35,8 @@
     const model = candidate.model, manifest = candidate.privateManifest, report = candidate.report, audit = candidate.audit.metadata, status = candidate.refreshStatus;
     const modelMeta = model.metadata;
     if (!isObject(modelMeta) || !isObject(audit) || !Array.isArray(model.jobs) || !Array.isArray(model.companies) || !model.companies.length) throw new Error('Invalid workspace model.');
+    if (modelMeta.businessDefinitionVersion !== 'powerbi-aligned-v1' ||
+        [manifest.businessDefinitionVersion, report.businessDefinitionVersion, audit.businessDefinitionVersion, status.businessDefinitionVersion].some((value) => value !== modelMeta.businessDefinitionVersion)) throw new Error('Mixed business definitions.');
     if (!/^[a-f0-9]{64}$/.test(manifest.snapshotId) || !/^[a-f0-9]{64}$/.test(manifest.sourceBatchId)) throw new Error('Invalid workspace manifest.');
     if (manifest.sourceBatchId !== modelMeta.sourceBatchId || manifest.sourceBatchId !== audit.sourceBatchId || report.snapshotId !== manifest.sourceBatchId) throw new Error('Mixed source batches.');
     if (manifest.jobCount !== model.jobs.length || status.jobs !== model.jobs.length || status.status !== 'success') throw new Error('Incomplete source batch.');
@@ -43,6 +45,7 @@
     if (!Number.isFinite(processedAt) || [manifest.generatedAt, report.generatedAt, audit.processedAtUtc, status.processedAtUtc].some((value) => Date.parse(value) !== processedAt)) throw new Error('Mixed processing timestamps.');
     if (!/^data\/[A-Za-z0-9_-]+\.json$/.test(manifest.datasetPath) || manifest.compressedDatasetPath !== manifest.datasetPath + '.gz') throw new Error('Invalid workspace paths.');
     const history = candidate.backlogHistory.history;
+    if (candidate.backlogHistory.schemaVersion !== 2 || candidate.backlogHistory.definitionId !== 'powerbi-production-backlog-v1') throw new Error('Incompatible backlog history.');
     const latestHistoryEntry = Array.isArray(history) && history.length ? history[history.length - 1] : null;
     if (!latestHistoryEntry || latestHistoryEntry.asOf !== modelMeta.asOf || latestHistoryEntry.sourceBatchId !== manifest.sourceBatchId) throw new Error('Backlog history does not match the current snapshot.');
     return candidate;
@@ -113,14 +116,50 @@
     objectURLs.clear();
   }
 
+  function runtimeAssetsChanged(candidate) {
+    return ['dashboardHTML', 'appJS', 'stylesCSS'].some((name) => candidate[name] !== bundle[name]);
+  }
+
+  function showReloadNotice(text) {
+    let notice = $('secure-update-notice');
+    if (!notice) {
+      notice = document.createElement('div');
+      notice.id = 'secure-update-notice';
+      notice.setAttribute('role', 'status');
+      notice.setAttribute('aria-live', 'polite');
+      notice.style.cssText = 'position:fixed;bottom:74px;left:20px;right:20px;z-index:100;display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 18px;border:1px solid #376baf;border-radius:8px;background:#fff;color:#1f3864;box-shadow:0 4px 20px #15294326;font:14px/1.5 Segoe UI,Arial,sans-serif';
+      const textNode = document.createElement('span');
+      textNode.id = 'secure-update-message';
+      notice.append(textNode);
+      const reloadButton = document.createElement('button');
+      reloadButton.type = 'button';
+      reloadButton.textContent = 'Reload workspace';
+      reloadButton.style.cssText = 'border:0;border-radius:5px;background:#1f3864;color:#fff;padding:9px 12px;font:inherit;cursor:pointer';
+      reloadButton.addEventListener('click', lock);
+      notice.append(reloadButton);
+      document.body.append(notice);
+    }
+    $('secure-update-message').textContent = text;
+  }
+
   async function refresh() {
     if (!bundle || !key || !release) throw new Error('Workspace locked.');
     if (refreshPromise) return refreshPromise;
     refreshPromise = (async () => {
       const candidateRelease = await readRelease();
       if (candidateRelease.version === release.version) return false;
-      if (candidateRelease.salt !== release.salt || candidateRelease.iterations !== release.iterations) throw new Error('Reload and enter the current password to update this workspace.');
+      if (candidateRelease.version === pendingReloadVersion) return false;
+      if (candidateRelease.salt !== release.salt || candidateRelease.iterations !== release.iterations) {
+        pendingReloadVersion = candidateRelease.version;
+        showReloadNotice('Access updated. Reload and enter the current workspace password.');
+        return false;
+      }
       const candidateBundle = await decryptRelease(candidateRelease, key);
+      if (runtimeAssetsChanged(candidateBundle)) {
+        pendingReloadVersion = candidateRelease.version;
+        showReloadNotice('Dashboard update ready. Reload and enter the workspace password.');
+        return false;
+      }
       // Authentication and all batch checks complete before replacing the active data.
       releaseURLs();
       bundle = candidateBundle;
@@ -131,7 +170,7 @@
   }
 
   function lock() {
-    key = null;bundle = null;release = null;
+    key = null;bundle = null;release = null;pendingReloadVersion = null;
     releaseURLs();
     document.body.replaceChildren();
     location.reload();
